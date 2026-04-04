@@ -1,0 +1,25 @@
+{
+  "name": "mealsnap",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "granite dev",
+    "build": "ait build",
+    "lint": "eslint . --ext .ts,.tsx"
+  },
+  "dependencies": {
+    "@apps-in-toss/framework": "^2.0.0",
+    "@granite-js/native": "^1.0.7",
+    "@granite-js/plugin-router": "^1.0.7",
+    "@granite-js/react-native": "^1.0.7",
+    "@toss/tds-react-native": "^1.0.0",
+    "react": "19.2.3",
+    "react-native": "0.84.0",
+    "react-native-image-picker": "^7.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0",
+    "@types/react-native": "^0.73.0",
+    "typescript": "^5.4.0"
+  }
+}

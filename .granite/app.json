@@ -1,0 +1,9 @@
+{
+  "appName": "mealsnap",
+  "permissions": [
+    {
+      "name": "camera",
+      "access": "access"
+    }
+  ]
+}
