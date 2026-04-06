@@ -98,8 +98,8 @@ function HomePage() {
     if (action === 'bonus') {
       await claimBonus();
       try {
-        await grantPromotionReward({ params: { promotionCode: code, amount: 10 } });
-        Alert.alert('🎁 보너스 획득!', '3끼 완료 보너스로 토스포인트 10원을 받았어요!');
+        await grantPromotionReward({ params: { promotionCode: code, amount: 3 } });
+        Alert.alert('🎁 보너스 획득!', '3끼 완료 보너스로 토스포인트 3원을 받았어요!');
       } catch {
         Alert.alert('🎁 보너스 완료!', '포인트는 잠시 후 지급돼요.');
       }
@@ -107,8 +107,8 @@ function HomePage() {
       await certifyMeal(action);
       const info = MEAL_INFO[action];
       try {
-        await grantPromotionReward({ params: { promotionCode: code, amount: 10 } });
-        Alert.alert(`${info.emoji} ${info.label} 기록 완료!`, '토스포인트 10원이 지급됐어요!');
+        await grantPromotionReward({ params: { promotionCode: code, amount: 3 } });
+        Alert.alert(`${info.emoji} ${info.label} 기록 완료!`, '토스포인트 3원이 지급됐어요!');
       } catch {
         Alert.alert(`${info.emoji} 기록 완료!`, '포인트는 잠시 후 지급돼요.');
       }
@@ -176,7 +176,7 @@ function HomePage() {
         <Text style={styles.summaryText}>
           오늘 <Text style={styles.summaryHighlight}>{totalEarnedToday}원</Text> 획득했어요
         </Text>
-        <Text style={styles.summaryMax}>최대 40원</Text>
+        <Text style={styles.summaryMax}>최대 12원</Text>
       </View>
 
       <ScrollView
@@ -203,7 +203,7 @@ function HomePage() {
               </View>
               {done ? (
                 <View style={styles.doneTag}>
-                  <Text style={styles.doneTagText}>✓ +10원</Text>
+                  <Text style={styles.doneTagText}>✓ +3원</Text>
                 </View>
               ) : (
                 <Button
@@ -234,11 +234,11 @@ function HomePage() {
           ) : allThreeDone && isWindowActive('bonus') ? (
             <>
               <Text style={styles.bonusButtonTitle}>🎁 3끼 완료 보너스!</Text>
-              <Text style={styles.bonusButtonSub}>광고 보고 추가 10원 받기</Text>
+              <Text style={styles.bonusButtonSub}>광고 보고 추가 3원 받기</Text>
             </>
           ) : (
             <>
-              <Text style={styles.bonusButtonTitleDisabled}>🎁 3끼 완료 보너스 +10원</Text>
+              <Text style={styles.bonusButtonTitleDisabled}>🎁 3끼 완료 보너스 +3원</Text>
               <Text style={styles.bonusButtonSubDisabled}>
                 {!allThreeDone
                   ? `${completedCount}/3 완료 — 3끼 모두 기록하면 활성화돼요`

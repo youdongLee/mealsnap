@@ -36,7 +36,7 @@ const MealContext = createContext<MealContextType>({
 });
 
 const STORAGE_KEY = '@mealsnap/records';
-const POINTS_PER_ACTION = 10;
+const POINTS_PER_ACTION = 3;
 
 export function todayKey(): string {
   const d = new Date();
