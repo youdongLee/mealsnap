@@ -5,24 +5,22 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TouchableOpacity,
   View,
 } from 'react-native';
 
 export const Route = createRoute('/info', {
   component: InfoPage,
-  screenOptions: { headerShown: false },
 });
 
 const PRIMARY = '#FF6B35';
 const PRIMARY_LIGHT = '#FFF0EB';
-const BANNER_AD_ID = 'ait-ad-test-banner-id';
+const BANNER_AD_ID = 'ait.v2.live.3295a773f7af466f';
 
 const INFO_ITEMS = [
   {
     emoji: '📷',
     title: '식사 사진 기록',
-    desc: '아침·점심·저녁 식사를 사진으로 찍어 참여하면 끼니당 토스포인트 10원을 받아요.',
+    desc: '아침·점심·저녁 식사를 사진으로 찍어 참여하면 끼니당 토스포인트 3원을 받아요.',
   },
   {
     emoji: '📺',
@@ -32,12 +30,12 @@ const INFO_ITEMS = [
   {
     emoji: '🎁',
     title: '3끼 완료 보너스',
-    desc: '하루에 3끼를 모두 기록하면 보너스 광고를 볼 수 있어요. 추가로 10원을 더 받을 수 있어요.',
+    desc: '하루에 3끼를 모두 기록하면 보너스 광고를 볼 수 있어요. 추가로 3원을 더 받을 수 있어요.',
   },
   {
     emoji: '💰',
-    title: '하루 최대 40원',
-    desc: '아침 10원 + 점심 10원 + 저녁 10원 + 보너스 10원으로 하루 최대 40원을 적립할 수 있어요.',
+    title: '하루 최대 12원',
+    desc: '아침 3원 + 점심 3원 + 저녁 3원 + 보너스 3원으로 하루 최대 12원을 적립할 수 있어요.',
   },
   {
     emoji: '📋',
@@ -52,19 +50,8 @@ const INFO_ITEMS = [
 ];
 
 function InfoPage() {
-  const navigation = Route.useNavigation();
-
   return (
     <View style={styles.container}>
-      {/* 헤더 */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} activeOpacity={0.7} style={styles.backButton}>
-          <Text style={styles.backButtonText}>←</Text>
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>앱 안내</Text>
-        <View style={styles.backButton} />
-      </View>
-
       <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
         {/* 앱 소개 */}
         <View style={styles.heroCard}>
