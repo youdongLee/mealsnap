@@ -1,5 +1,5 @@
 import { createRoute } from '@granite-js/react-native';
-import { InlineAd, loadFullScreenAd, showFullScreenAd } from '@apps-in-toss/framework';
+import { InlineAd, loadFullScreenAd, openCamera, showFullScreenAd } from '@apps-in-toss/framework';
 import { grantPromotionReward } from '@apps-in-toss/native-modules';
 import { Button } from '@toss/tds-react-native';
 import React, { useEffect, useRef, useState } from 'react';
@@ -11,7 +11,6 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { launchCamera } from 'react-native-image-picker';
 import { useMeals, MealType } from '../stores/MealContext';
 
 export const Route = createRoute('/', { component: HomePage });
@@ -20,9 +19,8 @@ const PRIMARY = '#FF6B35';
 const PRIMARY_LIGHT = '#FFF0EB';
 const PRIMARY_DARK = '#E55A25';
 
-// 개발 중 테스트 ID 사용 (실제 출시 전 콘솔에서 발급받은 ID로 교체)
-const REWARD_AD_ID = 'ait-ad-test-rewarded-id';
-const BANNER_AD_ID = 'ait-ad-test-banner-id';
+const REWARD_AD_ID = 'ait.v2.live.25df9f1c1258468d';
+const BANNER_AD_ID = 'ait.v2.live.3295a773f7af466f';
 
 // TODO: 앱인토스 콘솔에서 프로모션 코드 등록 후 교체
 const PROMOTION_CODES: Record<MealType | 'bonus', string> = {
@@ -31,6 +29,18 @@ const PROMOTION_CODES: Record<MealType | 'bonus', string> = {
   dinner:    'MEALSNAP_DINNER',
   bonus:     'MEALSNAP_BONUS',
 };
+
+const MEAL_WINDOWS: Record<MealType | 'bonus', { start: number; end: number; label: string }> = {
+  breakfast: { start:  7 * 60,           end:  9 * 60,       label: '오전 7시 ~ 9시' },
+  lunch:     { start: 12 * 60,           end: 14 * 60,       label: '오후 12시 ~ 2시' },
+  dinner:    { start: 18 * 60,           end: 20 * 60,       label: '오후 6시 ~ 8시' },
+  bonus:     { start: 21 * 60,           end: 23 * 60 + 50,  label: '오후 9시 ~ 11시 50분' },
+};
+
+function kstMinutes(): number {
+  const kst = new Date(Date.now() + 9 * 60 * 60 * 1000);
+  return kst.getUTCHours() * 60 + kst.getUTCMinutes();
+}
 
 const MEAL_INFO: Record<MealType, { label: string; emoji: string; description: string }> = {
   breakfast: { label: '아침',  emoji: '🌅', description: '하루의 시작을 기록해요' },
@@ -51,6 +61,17 @@ function HomePage() {
   const pendingAction = useRef<MealType | 'bonus' | null>(null);
   const adSupported = loadFullScreenAd.isSupported();
   const [adLoaded, setAdLoaded] = useState(!adSupported);
+  const [nowMinutes, setNowMinutes] = useState(kstMinutes());
+
+  useEffect(() => {
+    const timer = setInterval(() => setNowMinutes(kstMinutes()), 60_000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const isWindowActive = (type: MealType | 'bonus') => {
+    const { start, end } = MEAL_WINDOWS[type];
+    return nowMinutes >= start && nowMinutes < end;
+  };
 
   useEffect(() => {
     if (!adSupported) return;
@@ -116,16 +137,18 @@ function HomePage() {
     });
   };
 
-  const handleCertify = (meal: MealType) => {
-    if (todayRecord[meal] || !adLoaded) return;
-    launchCamera({ mediaType: 'photo', saveToPhotos: false }, (response) => {
-      if (response.didCancel || response.errorCode) return;
+  const handleCertify = async (meal: MealType) => {
+    if (todayRecord[meal] || !adLoaded || !isWindowActive(meal)) return;
+    try {
+      await openCamera({ base64: false });
       showRewardAd(meal);
-    });
+    } catch {
+      // 사용자가 촬영을 취소하거나 권한 거부
+    }
   };
 
   const handleBonus = () => {
-    if (!allThreeDone || todayRecord.bonusClaimed || !adLoaded) return;
+    if (!allThreeDone || todayRecord.bonusClaimed || !adLoaded || !isWindowActive('bonus')) return;
     showRewardAd('bonus');
   };
 
@@ -165,13 +188,17 @@ function HomePage() {
         {(['breakfast', 'lunch', 'dinner'] as MealType[]).map((meal) => {
           const info = MEAL_INFO[meal];
           const done = todayRecord[meal];
+          const windowActive = isWindowActive(meal);
+          const windowLabel = MEAL_WINDOWS[meal].label;
           return (
-            <View key={meal} style={[styles.mealCard, done && styles.mealCardDone]}>
+            <View key={meal} style={[styles.mealCard, done && styles.mealCardDone, !windowActive && !done && styles.mealCardInactive]}>
               <View style={styles.mealCardLeft}>
                 <Text style={styles.mealEmoji}>{info.emoji}</Text>
                 <View>
-                  <Text style={[styles.mealLabel, done && styles.mealLabelDone]}>{info.label}</Text>
-                  <Text style={styles.mealDescription}>{info.description}</Text>
+                  <Text style={[styles.mealLabel, done && styles.mealLabelDone, !windowActive && !done && styles.mealLabelInactive]}>{info.label}</Text>
+                  <Text style={styles.mealDescription}>
+                    {done ? info.description : windowActive ? info.description : windowLabel}
+                  </Text>
                 </View>
               </View>
               {done ? (
@@ -182,7 +209,7 @@ function HomePage() {
                 <Button
                   type="primary"
                   size="medium"
-                  disabled={!adLoaded}
+                  disabled={!adLoaded || !windowActive}
                   onPress={() => handleCertify(meal)}
                 >
                   📷 참여하기
@@ -196,15 +223,15 @@ function HomePage() {
         <TouchableOpacity
           style={[
             styles.bonusButton,
-            (!allThreeDone || todayRecord.bonusClaimed) && styles.bonusButtonDisabled,
+            (!allThreeDone || todayRecord.bonusClaimed || !isWindowActive('bonus')) && styles.bonusButtonDisabled,
           ]}
           onPress={handleBonus}
           activeOpacity={0.7}
-          disabled={!allThreeDone || todayRecord.bonusClaimed || !adLoaded}
+          disabled={!allThreeDone || todayRecord.bonusClaimed || !adLoaded || !isWindowActive('bonus')}
         >
           {todayRecord.bonusClaimed ? (
             <Text style={styles.bonusButtonTextDisabled}>✓ 오늘 보너스를 모두 받았어요</Text>
-          ) : allThreeDone ? (
+          ) : allThreeDone && isWindowActive('bonus') ? (
             <>
               <Text style={styles.bonusButtonTitle}>🎁 3끼 완료 보너스!</Text>
               <Text style={styles.bonusButtonSub}>광고 보고 추가 10원 받기</Text>
@@ -212,7 +239,11 @@ function HomePage() {
           ) : (
             <>
               <Text style={styles.bonusButtonTitleDisabled}>🎁 3끼 완료 보너스 +10원</Text>
-              <Text style={styles.bonusButtonSubDisabled}>{completedCount}/3 완료 — 3끼 모두 기록하면 활성화돼요</Text>
+              <Text style={styles.bonusButtonSubDisabled}>
+                {!allThreeDone
+                  ? `${completedCount}/3 완료 — 3끼 모두 기록하면 활성화돼요`
+                  : `${MEAL_WINDOWS.bonus.label}에 참여할 수 있어요`}
+              </Text>
             </>
           )}
         </TouchableOpacity>
@@ -329,6 +360,9 @@ const styles = StyleSheet.create({
     borderColor: PRIMARY,
     backgroundColor: PRIMARY_LIGHT,
   },
+  mealCardInactive: {
+    opacity: 0.5,
+  },
   mealCardLeft: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -348,6 +382,9 @@ const styles = StyleSheet.create({
   },
   mealLabelDone: {
     color: PRIMARY_DARK,
+  },
+  mealLabelInactive: {
+    color: '#8B95A1',
   },
   mealDescription: {
     fontSize: 12,
